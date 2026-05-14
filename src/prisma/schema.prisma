@@ -214,3 +214,51 @@ model ProjectReportCheckResult {
     @@index([projectReportId])
     @@index([category])
 }
+model Council {
+  councilId        String            @id @map("council_id")
+  councilName      String            @map("council_name")
+  state            String
+  officialWebsite  String?           @map("official_website")
+  status           String?           @default("pending")
+  documentsFound   Int               @default(0) @map("documents_found")
+  lastProcessedAt  DateTime?         @map("last_processed_at")
+  notes            String?
+  documents        CouncilDocument[]
+  @@map("councils")
+}
+
+model CouncilDocument {
+  docId              String    @id @default(uuid()) @map("doc_id")
+  councilId          String    @map("council_id")
+  council            Council   @relation(fields: [councilId], references: [councilId])
+  url                String
+  domain             String?
+  documentTitle      String?   @map("document_title")
+  documentType       String?   @map("document_type")
+  fileFormat         String?   @map("file_format")
+  fileSizeBytes      BigInt?   @map("file_size_bytes")
+  contentHash        String?   @map("content_hash")
+  publicationDate    DateTime? @map("publication_date")
+  isArchived         Boolean   @default(false) @map("is_archived")
+  credibilityScore   Float?    @map("credibility_score")
+  validationDecision String?   @map("validation_decision")
+  validationReason   String?   @map("validation_reason")
+  blobUrl            String?   @map("blob_url")
+  textExtracted      Boolean   @default(false) @map("text_extracted")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  @@map("council_documents")
+}
+
+model ValidationAuditLog {
+  logId       Int      @id @default(autoincrement()) @map("log_id")
+  runId       String?  @map("run_id")
+  councilId   String?  @map("council_id")
+  url         String?
+  checkName   String?  @map("check_name")
+  checkResult String?  @map("check_result")
+  checkDetail String?  @map("check_detail")
+  llmPrompt   String?  @map("llm_prompt")
+  llmResponse String?  @map("llm_response")
+  createdAt   DateTime @default(now()) @map("created_at")
+  @@map("validation_audit_log")
+}
