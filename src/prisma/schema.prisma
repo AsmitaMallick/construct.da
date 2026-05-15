@@ -154,7 +154,7 @@ model Project {
 }
 
 model ProjectReport {
-    id               String            @id @default(uuid())
+    id               String              @id @default(uuid())
     projectId        String
     status           ProjectReportStatus @default(PENDING)
     score            Int?
@@ -165,7 +165,7 @@ model ProjectReport {
     rulesJson        Json?
     rawOutputJson    Json?
     content          Json
-    version          Int               @default(1)
+    version          Int                 @default(1)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -174,21 +174,21 @@ model ProjectReport {
     findings     ProjectReportFinding[]
     checkResults ProjectReportCheckResult[]
 
+    @@unique([projectId, version])
     @@index([projectId])
     @@index([createdAt])
-    @@unique([projectId, version])
 }
 
 model ProjectReportFinding {
-    id             String         @id @default(uuid())
+    id              String   @id @default(uuid())
     projectReportId String
-    key            String
-    severity       String
-    title          String
-    detail         String
-    evidence       Json?
-    recommendation String?
-    createdAt      DateTime       @default(now())
+    key             String
+    severity        String
+    title           String
+    detail          String
+    evidence        Json?
+    recommendation  String?
+    createdAt       DateTime @default(now())
 
     projectReport ProjectReport @relation(fields: [projectReportId], references: [id], onDelete: Cascade)
 
@@ -197,7 +197,7 @@ model ProjectReportFinding {
 }
 
 model ProjectReportCheckResult {
-    id              String       @id @default(uuid())
+    id              String   @id @default(uuid())
     projectReportId String
     key             String
     category        String
@@ -207,69 +207,35 @@ model ProjectReportCheckResult {
     expected        Json?
     actual          Json?
     evidence        Json?
-    createdAt       DateTime     @default(now())
+    createdAt       DateTime @default(now())
 
     projectReport ProjectReport @relation(fields: [projectReportId], references: [id], onDelete: Cascade)
 
     @@index([projectReportId])
     @@index([category])
 }
+
 model State {
-  id        String      @id @default(cuid())
-  code      String      @unique
-  name      String      @unique
-  councils  Council[]
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+    id        String    @id @default(cuid())
+    code      String    @unique
+    name      String    @unique
+    councils  Council[]
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
 }
 
 model Council {
-  councilId        String            @id @map("council_id")
-  councilName      String            @map("council_name")
-  stateId          String?           @map("state_id")
-  state            State?            @relation(fields: [stateId], references: [id], onDelete: Cascade)
-  officialWebsite  String?           @map("official_website")
-  status           String?           @default("pending")
-  documentsFound   Int               @default(0) @map("documents_found")
-  lastProcessedAt  DateTime?         @map("last_processed_at")
-  notes            String?
-  documents        CouncilDocument[]
-  @@map("councils")
-  @@index([stateId])
-}
+    id              Int               @id @default(autoincrement()) @map("council_id")
+    councilName     String            @map("council_name")
+    stateId         String?           @map("state_id")
+    state           State?            @relation(fields: [stateId], references: [id], onDelete: Cascade)
+    officialWebsite String?           @map("official_website")
+    status          String?           @default("pending")
+    documentsFound  Int               @default(0) @map("documents_found")
+    lastProcessedAt DateTime?         @map("last_processed_at")
+    notes           String?
 
-model CouncilDocument {
-  docId              String    @id @default(uuid()) @map("doc_id")
-  councilId          String    @map("council_id")
-  council            Council   @relation(fields: [councilId], references: [councilId])
-  url                String
-  domain             String?
-  documentTitle      String?   @map("document_title")
-  documentType       String?   @map("document_type")
-  fileFormat         String?   @map("file_format")
-  fileSizeBytes      BigInt?   @map("file_size_bytes")
-  contentHash        String?   @map("content_hash")
-  publicationDate    DateTime? @map("publication_date")
-  isArchived         Boolean   @default(false) @map("is_archived")
-  credibilityScore   Float?    @map("credibility_score")
-  validationDecision String?   @map("validation_decision")
-  validationReason   String?   @map("validation_reason")
-  blobUrl            String?   @map("blob_url")
-  textExtracted      Boolean   @default(false) @map("text_extracted")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  @@map("council_documents")
-}
 
-model ValidationAuditLog {
-  logId       Int      @id @default(autoincrement()) @map("log_id")
-  runId       String?  @map("run_id")
-  councilId   String?  @map("council_id")
-  url         String?
-  checkName   String?  @map("check_name")
-  checkResult String?  @map("check_result")
-  checkDetail String?  @map("check_detail")
-  llmPrompt   String?  @map("llm_prompt")
-  llmResponse String?  @map("llm_response")
-  createdAt   DateTime @default(now()) @map("created_at")
-  @@map("validation_audit_log")
+    @@index([stateId])
+    @@map("councils")
 }

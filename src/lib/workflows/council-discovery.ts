@@ -23,10 +23,10 @@ interface WorkflowResult {
   stateCode: string;
 }
 
-export async function councilDiscoveryWorkflow(
-  state: string
+export async function councilDiscoveryStep(
+  state: string,
 ): Promise<WorkflowResult> {
-  "use workflow";
+  "use step";
 
   const normalized = normalizeStateCode(state);
   if (!normalized) {
@@ -35,16 +35,15 @@ export async function councilDiscoveryWorkflow(
 
   let stateRecord = await getStateByCode(normalized);
   if (!stateRecord) {
-    stateRecord = await getOrCreateState(
-      normalized,
-      getStateName(normalized)
-    );
+    stateRecord = await getOrCreateState(normalized, getStateName(normalized));
   }
 
   let councils = await getCouncilsByStateId(stateRecord.id);
 
   if (councils.length === 0) {
-    console.log(`No councils found for ${normalized}, running discovery agent...`);
+    console.log(
+      `No councils found for ${normalized}, running discovery agent...`,
+    );
 
     const discoveredCouncils = await runCouncilDiscoveryAgent(normalized);
 
@@ -54,7 +53,7 @@ export async function councilDiscoveryWorkflow(
         discoveredCouncils.map((c) => ({
           name: c.name,
           officialWebsite: c.officialWebsite,
-        }))
+        })),
       );
 
       councils = await getCouncilsByStateId(stateRecord.id);
@@ -71,4 +70,22 @@ export async function councilDiscoveryWorkflow(
     source: councils.length > 0 ? "database" : "search",
     stateCode: normalized,
   };
+}
+
+export async function runCouncilDiscovery(state?: string) {
+  "use workflow";
+
+  try {
+    console.log("Starting council discovery workflow for state:", state);
+    const result = await councilDiscoveryStep(state || "NSW");
+    return result;
+    console.log("Council Discovery Result:", result);
+  } catch (error) {
+    console.error("Error during council discovery:", error);
+    return {
+    councils: [],
+      source: "error",
+      stateCode: state || "unknown",
+    };
+  }
 }

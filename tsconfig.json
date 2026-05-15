@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "rootDir": ".",
     "allowJs": true,
     "skipLibCheck": true,
@@ -23,18 +27,35 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@data/*": ["./data/*"],
-      "@models/*": ["./src/types/*"],
-      "@workflows/*": ["./src/lib/workflows/*"],
-      "@actions/*": ["./src/lib/actions/*"],
-      "@auth/*": ["./src/lib/auth/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@data/*": [
+        "./data/*"
+      ],
+      "@models/*": [
+        "./src/types/*"
+      ],
+      "@workflows/*": [
+        "./src/lib/workflows/*"
+      ],
+      "@actions/*": [
+        "./src/lib/actions/*"
+      ],
+      "@auth/*": [
+        "./src/lib/auth/*"
+      ]
     }
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next"]
+  "exclude": [
+    "node_modules",
+    ".next"
+  ]
 }
