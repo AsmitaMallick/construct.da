@@ -214,10 +214,20 @@ model ProjectReportCheckResult {
     @@index([projectReportId])
     @@index([category])
 }
+model State {
+  id        String      @id @default(cuid())
+  code      String      @unique
+  name      String      @unique
+  councils  Council[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
 model Council {
   councilId        String            @id @map("council_id")
   councilName      String            @map("council_name")
-  state            String
+  stateId          String?           @map("state_id")
+  state            State?            @relation(fields: [stateId], references: [id], onDelete: Cascade)
   officialWebsite  String?           @map("official_website")
   status           String?           @default("pending")
   documentsFound   Int               @default(0) @map("documents_found")
@@ -225,6 +235,7 @@ model Council {
   notes            String?
   documents        CouncilDocument[]
   @@map("councils")
+  @@index([stateId])
 }
 
 model CouncilDocument {

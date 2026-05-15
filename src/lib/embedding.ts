@@ -1,7 +1,7 @@
 import { google, GoogleEmbeddingModelOptions } from '@ai-sdk/google';
 import { embed, embedMany } from 'ai';
 import { Prisma } from '@prisma/client';
-import prisma from './prisma';
+import {prisma} from './prisma';
 import { SemanticChunk } from '@models/types';
 
 const DEFAULT_EMBEDDING_CHUNK_SIZE = 100;
