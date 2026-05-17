@@ -1,5 +1,4 @@
-import {prisma} from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
 export function normalizeStateCode(input: string): string | null {
   const normalized = input.toUpperCase().trim();
@@ -25,35 +24,91 @@ export async function getCouncilsByStateId(stateId: string) {
   });
 }
 
-export async function upsertCouncils(
-  stateId: string,
-  councils: Array<{ name: string; officialWebsite: string }>
+export async function getCouncilById(councilId: number) {
+  return prisma.council.findUnique({ where: { id: councilId } });
+}
+
+export async function getCouncilsForLinking(stateId?: string) {
+  return prisma.council.findMany({
+    where: stateId ? { stateId } : undefined,
+    select: {
+      id: true,
+      councilName: true,
+      officialWebsite: true,
+      stateId: true,
+    },
+    orderBy: [{ councilName: "asc" }],
+  });
+}
+
+export async function upsertCouncilLinks(
+  councilId: number,
+  links: Array<{
+    url: string;
+    title?: string | null;
+    sourceType?: string | null;
+  }>,
 ) {
-  const results = [];
+  const results: Array<any> = [];
 
-  for (const council of councils) {
-    const councilId = council.name
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "");
-
-    const result = await prisma.council.upsert({
+  for (const link of links) {
+    const result = await prisma.councilLink.upsert({
       where: {
-        councilId: councilId,
+        councilId_url: {
+          councilId,
+          url: link.url,
+        },
       },
       update: {
-        councilName: council.name,
-        stateId,
-        officialWebsite: council.officialWebsite,
+        title: link.title ?? null,
+        sourceType: link.sourceType ?? null,
       },
       create: {
         councilId,
-        councilName: council.name,
-        stateId,
-        officialWebsite: council.officialWebsite,
+        url: link.url,
+        title: link.title ?? null,
+        sourceType: link.sourceType ?? null,
       },
     });
     results.push(result);
+  }
+
+  return results;
+}
+
+export async function upsertCouncils(
+  stateId: string,
+  councils: Array<{ name: string; officialWebsite: string }>,
+) {
+  const results: Array<any> = [];
+
+  for (const council of councils) {
+    // Find existing council by name + stateId (no unique constraint exists),
+    // update if found, otherwise create a new record.
+    const existing = await prisma.council.findFirst({
+      where: { councilName: council.name, stateId },
+    });
+
+    if (existing) {
+      const updated = await prisma.council.update({
+        where: { id: existing.id },
+        data: {
+          councilName: council.name,
+          stateId,
+          officialWebsite: council.officialWebsite,
+        },
+      });
+      results.push(updated);
+    } else {
+      const created = await prisma.council.create({
+        data: {
+          councilName: council.name,
+          stateId,
+          officialWebsite: council.officialWebsite,
+        },
+      });
+      results.push(created);
+    }
   }
 
   return results;

@@ -234,8 +234,23 @@ model Council {
     documentsFound  Int               @default(0) @map("documents_found")
     lastProcessedAt DateTime?         @map("last_processed_at")
     notes           String?
+    links           CouncilLink[]
 
 
     @@index([stateId])
     @@map("councils")
+}
+
+model CouncilLink {
+    id         String   @id @default(uuid())
+    councilId  Int      @map("council_id")
+    council    Council  @relation(fields: [councilId], references: [id], onDelete: Cascade)
+    url        String
+    title      String?
+    sourceType String?  @map("source_type")
+    createdAt  DateTime @default(now()) @map("created_at")
+
+    @@unique([councilId, url])
+    @@index([councilId])
+    @@map("council_links")
 }
