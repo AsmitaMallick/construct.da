@@ -1,6 +1,7 @@
 import { google } from "@ai-sdk/google";
-import { generateText, Output } from "ai";
+import { generateText } from "ai";
 import { webSearchTool } from "@/lib/agent/tools/web-search";
+import { parseJsonFromText } from "@/lib/utils/parse-json";
 import { z } from "zod";
 
 const linkSchema = z.object({
@@ -128,6 +129,8 @@ function inferSourceType(
   }
 }
 
+// parseLinkOutput removed in favor of `parseJsonFromText` utility
+
 export async function runCouncilLinksAgent(input: {
   councilName: string;
   officialWebsite?: string | null;
@@ -137,19 +140,20 @@ export async function runCouncilLinksAgent(input: {
   const officialHost = extractHostname(input.officialWebsite);
   const officialWebsite = input.officialWebsite ?? "";
 
-  const { output } = await generateText({
+  const { text } = await generateText({
     model: google("gemini-3-flash"),
     tools: {
       webSearch: webSearchTool,
     },
-    output: Output.object({ schema: discoveryOutputSchema }),
     system: [
       "You are a senior research assistant for Australian local government councils.",
-      "Find exactly 5 relevant links for the named council.",
-      "Links must be official council pages, official government portals, or official PDFs.",
-      "Only return URLs on the council's official domain or *.gov.au domains.",
-      "Avoid social media, news articles, or third-party blogs.",
-      "Prefer the council's official domain when possible.",
+      "Find relevant links for the named council.",
+      "You MUST use the webSearch tool to verify links before returning them.",
+      "Return ONLY valid raw JSON.",
+      "Never include markdown, code fences, explanations, or extra text.",
+      "Return a single JSON object with keys `councilName` and `links`.",
+      "`links` must be an array of objects with keys: `url`, `title` (optional), and `sourceType` (optional: official | gov | pdf).",
+      'Example output:\n{\n  "councilName": "Shire Council",\n  "links": [\n    {\n      "url": "https://example.gov.au/planning",\n      "title": "Planning and Development",\n      "sourceType": "official"\n    }\n  ]\n}',
     ].join("\n"),
     prompt: [
       `Council: ${input.councilName}`,
@@ -162,6 +166,12 @@ export async function runCouncilLinksAgent(input: {
       .join("\n"),
   });
 
-  const links = output?.links ?? [];
+  console.log("Raw council links output:", text);
+
+  const parsed = parseJsonFromText<{
+    councilName?: string;
+    links?: DiscoveredCouncilLink[];
+  }>(text ?? "");
+  const links = parsed?.links ?? [];
   return filterAndRankLinks(links, input.officialWebsite, maxLinks);
 }
