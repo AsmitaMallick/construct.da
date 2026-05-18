@@ -1,5 +1,5 @@
 "use server";
-import prisma from "../prisma";
+import {prisma} from "../prisma";
 
 
 export async function createUser(name: string, email: string, clerkUserId: string) {

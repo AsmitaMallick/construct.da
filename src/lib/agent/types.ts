@@ -140,3 +140,24 @@ export const workflowIssueSchema = z.object({
   message: z.string(),
 });
 export type WorkflowIssue = z.infer<typeof workflowIssueSchema>;
+
+export const validationDecisionSchema = z.object({
+  url: z.string(),
+  councilId: z.string(),
+  decision: z.enum(["PASS", "CONDITIONAL_PASS", "FAIL"]),
+  credibilityScore: z.number().min(0).max(1),
+  failedChecks: z.array(z.string()),
+  passedChecks: z.array(z.string()),
+  reasoning: z.string(),
+  rulesList: z.array(z.string()),
+  documentType: z.string(),
+  reviewRequired: z.boolean(),
+});
+export type ValidationDecision = z.infer<typeof validationDecisionSchema>;
+
+export interface CandidateUrl {
+  url: string;
+  councilId: string;
+  councilName: string;
+  state: string;
+}

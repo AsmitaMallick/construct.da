@@ -11,7 +11,7 @@ import { runCouncilDiscoveryAgent } from "@/lib/agent/council-discovery-agent";
 import type { Council, State } from "@prisma/client";
 
 interface CouncilResult {
-  councilId: string;
+  id: number;
   councilName: string;
   officialWebsite: string | null;
   stateId: string | null;
@@ -62,7 +62,7 @@ export async function councilDiscoveryStep(
 
   return {
     councils: councils.map((c) => ({
-      councilId: c.councilId,
+      id: c.id,
       councilName: c.councilName,
       officialWebsite: c.officialWebsite,
       stateId: c.stateId,
@@ -78,14 +78,10 @@ export async function runCouncilDiscovery(state?: string) {
   try {
     console.log("Starting council discovery workflow for state:", state);
     const result = await councilDiscoveryStep(state || "NSW");
-    return result;
     console.log("Council Discovery Result:", result);
+    return result;
   } catch (error) {
     console.error("Error during council discovery:", error);
-    return {
-    councils: [],
-      source: "error",
-      stateCode: state || "unknown",
-    };
   }
+  return {};
 }

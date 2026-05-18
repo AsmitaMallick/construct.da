@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import {prisma} from "@/lib/prisma";
 
 export type ProjectOwnershipResult =
   | { status: "owned"; project: { id: string; userId: string; address: string; council: string; metadata: unknown } }

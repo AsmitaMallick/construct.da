@@ -17,7 +17,7 @@ import {
     type WorkflowIssue,
 } from "@/lib/agent/types";
 import { runComplianceChecksTool } from "@/lib/agent/tools/run-compliance-checks";
-import prisma from "../prisma";
+import {prisma} from "../prisma";
 import { GenerateProjectReportStatus, ProjectMetadata, ProjectStage, ProjectStatus } from "@models/data";
 import { getWritable } from "workflow";
 import { updateProjectMetadata } from "@actions/projects";

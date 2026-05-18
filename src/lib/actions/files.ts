@@ -1,7 +1,7 @@
 "use server";
 import { FileSpecs, FilesStrict } from "@models/data";
 import { ProjectStage, ProjectStatus } from "@models/data";
-import prisma from "../prisma";
+import {prisma} from "../prisma";
 import { updateProjectMetadata } from "./projects";
 
 function asJsonObject(value: unknown): Record<string, unknown> {

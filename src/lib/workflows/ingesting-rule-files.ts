@@ -3,7 +3,7 @@ import { RuleFiles } from "@prisma/client";
 import type { IngestionConfig, RuleFilePrisma, SemanticChunk } from "@models/types";
 import { processPDFWithMistral } from "../ocr";
 import { parseOCRDocument } from "../parser";
-import prisma from "../prisma";
+import {prisma} from "../prisma";
 import { buildSemanticChunks } from "../chunks";
 import { generateEmbeddings, saveEmbeddingsToDB } from "../embedding";
 import { convertJsonToListArray } from "../utils";

@@ -1,6 +1,6 @@
 "use server";
 import { FilesStrict, GenerateProjectReport, ProjectSpecs, ProjectStage, ProjectStatus, ProjectStrict, ProjectWithFiles } from "@models/data";
-import prisma from "../prisma";
+import {prisma} from "../prisma";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { buildRossStreetMasterViewProjectMetadata, buildRossStreetMasterViewProjectSpecs, ROSS_STREET_MASTER_VIEW_APPLICATION } from "@/lib/masterview/north-sydney";
 import { addressToCoordinatesGoogle } from "../geoEncoding";

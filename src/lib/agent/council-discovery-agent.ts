@@ -1,54 +1,15 @@
 import { google } from "@ai-sdk/google";
-import { generateText, Output } from "ai";
+import { generateText, stepCountIs } from "ai";
 import { webSearchTool } from "@/lib/agent/tools/web-search";
-import { z } from "zod";
+import { parseJsonFromText } from "@/lib/utils/parse-json";
 
-const councilSchema = z.object({
-  name: z.string().min(1).describe("Official council name"),
-  officialWebsite: z
-    .url()
-    .describe("Official council website URL"),
-});
-
-const discoveryOutputSchema = z.object({
-  councils: z
-    .array(councilSchema)
-    .describe("Array of councils in the Australian state"),
-  discoveryCount: z
-    .number()
-    .describe("Total number of councils discovered"),
-});
-
-export type DiscoveredCouncil = z.infer<typeof councilSchema>;
-
-function parseAgentResponse(text: string): DiscoveredCouncil[] {
-  try {
-    const codeBlockMatch = text.match(
-      /```(?:json)?\s*([\s\S]*?)\s*```/
-    );
-    const jsonString = codeBlockMatch
-      ? codeBlockMatch[1]
-      : text;
-
-    const parsed = JSON.parse(jsonString);
-
-    if (parsed.councils && Array.isArray(parsed.councils)) {
-      return parsed.councils;
-    }
-
-    if (Array.isArray(parsed)) {
-      return parsed;
-    }
-
-    return [];
-  } catch (e) {
-    console.error("Failed to parse agent response:", e);
-    return [];
-  }
+export interface DiscoveredCouncil {
+  name: string;
+  officialWebsite: string;
 }
 
 function deduplicateCouncils(
-  councils: DiscoveredCouncil[]
+  councils: DiscoveredCouncil[],
 ): DiscoveredCouncil[] {
   const seen = new Map<string, DiscoveredCouncil>();
 
@@ -63,24 +24,101 @@ function deduplicateCouncils(
 }
 
 export async function runCouncilDiscoveryAgent(
-  state: string
+  state: string,
 ): Promise<DiscoveredCouncil[]> {
-  const { output } = await generateText({
-    model: google("gemini-3-flash"),
+  const { text } = await generateText({
+    model: google("gemini-2.5-flash"),
     tools: {
       webSearch: webSearchTool,
     },
-    output: Output.object({ schema: discoveryOutputSchema }),
-    system: `You are a council discovery assistant for Australian local government.
-Find all local councils in ${state} and return their official names and websites.
-Requirements:
-- Return ONLY local government councils (exclude state/regional bodies)
-- Include official website URLs (verify they are official council sites)
-- Format response as JSON within markdown code blocks if needed
-- Return an array of councils with "name" and "officialWebsite" fields`,
-    prompt: `Find all local councils in ${state}, Australia. Return their names and official website URLs as a JSON array.`,
-  });
+    stopWhen: stepCountIs(30),
+    system: `You are an Australian local government discovery engine.
 
-  const parsed = parseAgentResponse(output?.councils ? JSON.stringify(output) : "");
-  return deduplicateCouncils(parsed);
+Your task is to discover and return ALL official local government councils within the specified Australian state or territory.
+
+You MUST use the web search tool to verify and collect council information before answering.
+Do NOT rely only on prior knowledge.
+Search the web for official council listings and official council websites.
+
+You MUST:
+- Return ONLY valid raw JSON
+- Return a JSON array only
+- Never include markdown
+- Never include explanations
+- Never include code fences
+- Never include notes or comments
+- Never wrap the JSON in an object
+- Never truncate results
+
+Each item in the array MUST contain exactly these keys:
+
+[
+  {
+    "name": "Official Council Name",
+    "officialWebsite": "https://example.gov.au"
+  }
+]
+
+STRICT REQUIREMENTS:
+- Keys are CASE SENSITIVE:
+  - "name"
+  - "officialWebsite"
+- Use the council's OFFICIAL legal/public name
+- Include ONLY local government councils
+- Exclude:
+  - state government departments
+  - regional organizations
+  - county groupings
+  - associations
+  - tourism bodies
+  - utilities
+  - federal agencies
+- officialWebsite MUST:
+  - start with https://
+  - be the council's official website
+  - not be a Wikipedia page
+  - not be a directory listing
+- Remove duplicates
+- Ensure output is valid parsable JSON
+- Ensure all councils belong to the requested Australian state or territory only
+- Verify websites using web search results before returning them
+- If no councils are found, return []
+
+IMPORTANT:
+- You MUST perform web searches before generating the response
+- Do not skip web searches even if you already know the answer
+- The response is considered failed if it contains anything other than valid JSON
+
+Your response MUST contain ONLY the JSON array and nothing else.`,
+    prompt: `Find every official local government council in ${state}, Australia.
+
+You MUST use the web search tool to:
+1. Discover all councils in the state
+2. Verify the official council name
+3. Verify the official website URL
+
+Return a complete JSON array using this exact schema:
+
+[
+  {
+    "name": "Council Name",
+    "officialWebsite": "https://example.gov.au"
+  }
+]
+
+Requirements:
+- Return ONLY raw JSON
+- No markdown
+- No code fences
+- No explanations
+- Include ALL councils in the state
+- Exclude non-council organizations
+- Remove duplicates
+- Ensure all URLs are official council websites starting with https://`,
+  });
+  console.log("Raw council discovery output:", JSON.stringify(text));
+
+  const parsed = parseJsonFromText<DiscoveredCouncil[]>(text ?? "");
+  const councils = parsed ?? [];
+  return deduplicateCouncils(councils);
 }

@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { RuleFiles, ruleFiles } from "@data/fileData";
-import prisma from "@/lib/prisma";
+import {prisma} from "@/lib/prisma";
 
 import type { RuleCoverage } from "@prisma/client";
 import { put } from "@vercel/blob";

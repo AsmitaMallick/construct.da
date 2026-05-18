@@ -1,4 +1,4 @@
-import prisma from "../prisma";
+import {prisma} from "../prisma";
 import { getWritable } from "workflow";
 import { start } from "workflow/api";
 import { processPDFWithMistral } from "../ocr";
